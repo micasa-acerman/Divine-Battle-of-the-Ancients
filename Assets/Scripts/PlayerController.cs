@@ -5,12 +5,14 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float RotateSpeed = 130f;
-    private Animator m_Animator;
-    private AudioSource m_AudioSource;
     private bool m_InGround = true;
-    private Rigidbody m_RigidBody;
-    public Vector3 JumpVector;
+
+    public float JumpForce = 15f;
     public AudioSource AudioSourceJump;
+    private Animator m_Animator;
+    private Rigidbody m_RigidBody;
+    private AudioSource m_AudioSource;
+    private DamageController m_DamageController;
     void Start()
     {
         Application.targetFrameRate = 60;
@@ -19,8 +21,8 @@ public class PlayerController : MonoBehaviour
         m_AudioSource = GetComponent<AudioSource>();
         m_RigidBody = GetComponent<Rigidbody>();
         Screen.orientation = ScreenOrientation.LandscapeLeft;
+        m_DamageController = GetComponent<DamageController>();
     }
-
     void FixedUpdate()
     {
         var animatorInfo = m_Animator.GetCurrentAnimatorStateInfo(0);
@@ -33,26 +35,32 @@ public class PlayerController : MonoBehaviour
         }
         if (SimpleInput.GetButtonDown("Jump") && m_InGround)
         {
-            m_RigidBody.AddForce(Vector3.up * 25f, ForceMode.Impulse);
+            m_RigidBody.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
             m_InGround = false;
             m_Animator.SetBool("InGround", false);
             AudioSourceJump.Play();
         }
-        if (!m_InGround && SimpleInput.GetAxis("Vertical")!=0)
+        if (!m_InGround && SimpleInput.GetAxis("Vertical") != 0)
         {
             m_RigidBody.velocity += transform.forward * SimpleInput.GetAxis("Vertical") * 10f;
         }
-        if(SimpleInput.GetButtonDown("Attack1")){
+        if (SimpleInput.GetButtonDown("Attack1"))
+        {
             m_Animator.SetTrigger("Attack");
             m_Animator.SetInteger("AttackType", 1);
+            m_DamageController.MakeDamage(10);
         }
-        if(SimpleInput.GetButtonDown("Attack2")){
+        if (SimpleInput.GetButtonDown("Attack2"))
+        {
             m_Animator.SetTrigger("Attack");
             m_Animator.SetInteger("AttackType", 2);
+            m_DamageController.MakeDamage(25);
         }
-        if(SimpleInput.GetButtonDown("Attack3")){
+        if (SimpleInput.GetButtonDown("Attack3"))
+        {
             m_Animator.SetTrigger("Attack");
             m_Animator.SetInteger("AttackType", 3);
+            m_DamageController.MakeDamage(30);
         }
         AudioController(animatorInfo);
         float angle = SimpleInput.GetAxis("Horizontal") * Time.deltaTime * RotateSpeed;
@@ -67,7 +75,6 @@ public class PlayerController : MonoBehaviour
         {
             m_InGround = true;
             m_Animator.SetBool("InGround", true);
-            Debug.Log("OnGround");
         }
     }
     // void OnCollisionExit(Collision collisionInfo)
@@ -100,7 +107,6 @@ public class PlayerController : MonoBehaviour
                     m_AudioSource.loop = action.IsLoop;
                     m_AudioSource.Play();
                     m_CurrentAnimationName = action.AnimationName;
-                    Debug.Log("Play");
                 }
                 find = true;
                 break;
